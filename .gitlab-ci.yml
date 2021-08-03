@@ -1,0 +1,47 @@
+stages:
+  - recheck
+  - docker
+  - kubernest
+  - deploy
+
+recheck:
+  stage: recheck
+  script:
+     - echo 'I Testiing File'
+     - pwd
+     - whoami
+     - ip a
+     - docker version
+     - kubectl
+
+docker:
+  stage: docker
+  script:
+     - docker build -t nginx-gitlab .
+     - docker images list
+     - docker tag nginx-gitlab liquid07/nginx-docker-demo:nginx-gitlab
+     - docker login -u $User_Docker -p $Password_Docker 
+     - docker push liquid07/nginx-docker-demo:nginx-gitlab
+     - docker logout
+     - echo 'Update & Logout Docker Sucess..!!'
+
+kubernest:
+  stage: kubernest
+  only:
+    - main
+
+  script:
+     - export KUBECONFIG=rancher-kubeconfig.cfg
+     - kubectl cluster-info
+     - kubectl get node
+     - echo 'Kubectl config Apply...!!'
+
+deploy:
+  stage: deploy
+  only:
+    - main
+    
+  script:  
+    - export KUBECONFIG=rancher-kubeconfig.cfg
+    - kubectl apply -f k8s-deploy-nginx.yaml
+    - echo 'Deploy Nginx Sucess...!!'
